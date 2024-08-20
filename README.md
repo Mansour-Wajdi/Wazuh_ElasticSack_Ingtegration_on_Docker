@@ -1,263 +1,99 @@
-# Wazuh containers for Docker
 
-[![Slack](https://img.shields.io/badge/slack-join-blue.svg)](https://wazuh.com/community/join-us-on-slack/)
-[![Email](https://img.shields.io/badge/email-join-blue.svg)](https://groups.google.com/forum/#!forum/wazuh)
-[![Documentation](https://img.shields.io/badge/docs-view-green.svg)](https://documentation.wazuh.com)
-[![Documentation](https://img.shields.io/badge/web-view-green.svg)](https://wazuh.com)
+# Integrating Wazuh with Elastic Stack on Docker
 
-In this repository you will find the containers to run:
+Integrating Wazuh with the Elastic Stack on Docker allows for efficient monitoring, logging, and alerting in a containerized environment. This guide will walk you through the process, from setting up Docker to deploying Wazuh and Elastic Stack.
 
-* Wazuh manager: it runs the Wazuh manager, Wazuh API and Filebeat OSS
-* Wazuh dashboard: provides a web user interface to browse through alerts data and allows you to visualize agents configuration and status.
-* Wazuh indexer: Wazuh indexer container (working as a single-node cluster or as a multi-node cluster). **Be aware to increase the `vm.max_map_count` setting, as it's detailed in the [Wazuh documentation](https://documentation.wazuh.com/current/docker/wazuh-container.html#increase-max-map-count-on-your-host-linux).**
+---
 
-The folder `build-docker-images` contains a README explaining how to build the Wazuh images and the necessary assets.
-The folder `indexer-certs-creator` contains a README explaining how to create the certificates creator tool and the necessary assets.
-The folder `single-node` contains a README explaining how to run a Wazuh environment with one Wazuh manager, one Wazuh indexer, and one Wazuh dashboard.
-The folder `multi-node` contains a README explaining how to run a Wazuh environment with two Wazuh managers, three Wazuh indexer, and one Wazuh dashboard.
+## Prerequisites
 
-## Documentation
+### Install Docker Engine
 
-* [Wazuh full documentation](http://documentation.wazuh.com)
-* [Wazuh documentation for Docker](https://documentation.wazuh.com/current/docker/index.html)
-* [Docker hub](https://hub.docker.com/u/wazuh)
+Refer to [Docker Engine Installation](https://docs.docker.com/engine/install/ubuntu/#install-using-the-repository) if Docker is not already installed.
+
+### Install Docker Compose
+
+Refer to [Docker Compose Installation](https://docs.docker.com/compose/install/standalone/) if Docker Compose is not already installed.
+
+### Change vm.max_map_count
+
+1. **Edit sysctl.conf:**
+    ```bash
+    sudo nano /etc/sysctl.conf
+    ```
+
+2. **Set the following:**
+    ```text
+    vm.max_map_count=262144
+    ```
+
+3. **Apply the changes:**
+    ```bash
+    sudo sysctl -p
+    ```
+
+4. **Check the changes:**
+    ```bash
+    sudo sysctl vm.max_map_count
+    ```
 
 
-### Setup SSL certificate
+## Wazuh Docker Deployment (Single-node Deployment)
 
-Before starting the environment it is required to provide an SSL certificate (or just generate one self-signed).
+### Clone the Repository
 
-Documentation on how to provide these two can be found at [Wazuh Docker Documentation](https://documentation.wazuh.com/current/docker/wazuh-container.html#production-deployment).
-
-
-## Environment Variables
-
-Default values are included when available.
-
-### Wazuh
-```
-API_USERNAME="wazuh-wui"                            # Wazuh API username
-API_PASSWORD="MyS3cr37P450r.*-"                     # Wazuh API password - Must comply with requirements
-                                                    # (8+ length, uppercase, lowercase, specials chars)
-
-INDEXER_URL=https://wazuh.indexer:9200              # Wazuh indexer URL
-INDEXER_USERNAME=admin                              # Wazuh indexer Username
-INDEXER_PASSWORD=SecretPassword                     # Wazuh indexer Password
-FILEBEAT_SSL_VERIFICATION_MODE=full                 # Filebeat SSL Verification mode (full or none)
-SSL_CERTIFICATE_AUTHORITIES=""                      # Path of Filebeat SSL CA
-SSL_CERTIFICATE=""                                  # Path of Filebeat SSL Certificate
-SSL_KEY=""                                          # Path of Filebeat SSL Key
+```bash
+git clone https://github.com/Mansour-Wajdi/Wazuh_ElasticSack_Ingtegration_on_Docker.git 
 ```
 
-### Dashboard
-```
-PATTERN="wazuh-alerts-*"        # Default index pattern to use
+### Navigate to the single-node directory:
 
-CHECKS_PATTERN=true             # Defines which checks must to be consider by the healthcheck
-CHECKS_TEMPLATE=true            # step once the Wazuh app starts. Values must to be true or false
-CHECKS_API=true
-CHECKS_SETUP=true
-
-EXTENSIONS_PCI=true             # Enable PCI Extension
-EXTENSIONS_GDPR=true            # Enable GDPR Extension
-EXTENSIONS_HIPAA=true           # Enable HIPAA Extension
-EXTENSIONS_NIST=true            # Enable NIST Extension
-EXTENSIONS_TSC=true             # Enable TSC Extension
-EXTENSIONS_AUDIT=true           # Enable Audit Extension
-EXTENSIONS_OSCAP=false          # Enable OpenSCAP Extension
-EXTENSIONS_CISCAT=false         # Enable CISCAT Extension
-EXTENSIONS_AWS=false            # Enable AWS Extension
-EXTENSIONS_GCP=false            # Enable GCP Extension
-EXTENSIONS_VIRUSTOTAL=false     # Enable Virustotal Extension
-EXTENSIONS_OSQUERY=false        # Enable OSQuery Extension
-EXTENSIONS_DOCKER=false         # Enable Docker Extension
-
-APP_TIMEOUT=20000               # Defines maximum timeout to be used on the Wazuh app requests
-
-API_SELECTOR=true               Defines if the user is allowed to change the selected API directly from the Wazuh app top menu
-IP_SELECTOR=true                # Defines if the user is allowed to change the selected index pattern directly from the Wazuh app top menu
-IP_IGNORE="[]"                  # List of index patterns to be ignored
-
-DASHBOARD_USERNAME=kibanaserver     # Custom user saved in the dashboard keystore
-DASHBOARD_PASSWORD=kibanaserver     # Custom password saved in the dashboard keystore
-WAZUH_MONITORING_ENABLED=true       # Custom settings to enable/disable wazuh-monitoring indices
-WAZUH_MONITORING_FREQUENCY=900      # Custom setting to set the frequency for wazuh-monitoring indices cron task
-WAZUH_MONITORING_SHARDS=2           # Configure wazuh-monitoring-* indices shards and replicas
-WAZUH_MONITORING_REPLICAS=0         ##
+```bash
+cd Wazuh_ElasticSack_Ingtegration_on_Docker/wazuh-docker/single-node
 ```
 
-## Directory structure
+### Generate Self-signed Certificates
 
-    ├── build-docker-images
-    │   ├── build-images.sh
-    │   ├── build-images.yml
-    │   ├── README.md
-    │   ├── wazuh-dashboard
-    │   │   ├── config
-    │   │   │   ├── config.sh
-    │   │   │   ├── config.yml
-    │   │   │   ├── dl_base.sh
-    │   │   │   ├── entrypoint.sh
-    │   │   │   ├── install_wazuh_app.sh
-    │   │   │   ├── opensearch_dashboards.yml
-    │   │   │   ├── wazuh_app_config.sh
-    │   │   │   └── wazuh.yml
-    │   │   └── Dockerfile
-    │   ├── wazuh-indexer
-    │   │   ├── config
-    │   │   │   ├── action_groups.yml
-    │   │   │   ├── config.sh
-    │   │   │   ├── config.yml
-    │   │   │   ├── entrypoint.sh
-    │   │   │   ├── internal_users.yml
-    │   │   │   ├── opensearch.yml
-    │   │   │   ├── roles_mapping.yml
-    │   │   │   ├── roles.yml
-    │   │   │   └── securityadmin.sh
-    │   │   └── Dockerfile
-    │   └── wazuh-manager
-    │       ├── config
-    │       │   ├── check_repository.sh
-    │       │   ├── create_user.py
-    │       │   ├── etc
-    │       │   │   ├── cont-init.d
-    │       │   │   │   ├── 0-wazuh-init
-    │       │   │   │   ├── 1-config-filebeat
-    │       │   │   │   └── 2-manager
-    │       │   │   └── services.d
-    │       │   │       ├── filebeat
-    │       │   │       │   ├── finish
-    │       │   │       │   └── run
-    │       │   │       └── ossec-logs
-    │       │   │           └── run
-    │       │   ├── filebeat_module.sh
-    │       │   ├── filebeat.yml
-    │       │   ├── permanent_data.env
-    │       │   └── permanent_data.sh
-    │       └── Dockerfile
-    ├── CHANGELOG.md
-    ├── indexer-certs-creator
-    │   ├── config
-    │   │   └── entrypoint.sh
-    │   ├── Dockerfile
-    │   └── README.md
-    ├── LICENSE
-    ├── multi-node
-    │   ├── config
-    │   │   ├── certs.yml
-    │   │   ├── nginx
-    │   │   │   └── nginx.conf
-    │   │   ├── wazuh_cluster
-    │   │   │   ├── wazuh_manager.conf
-    │   │   │   └── wazuh_worker.conf
-    │   │   ├── wazuh_dashboard
-    │   │   │   ├── opensearch_dashboards.yml
-    │   │   │   └── wazuh.yml
-    │   │   └── wazuh_indexer
-    │   │       ├── internal_users.yml
-    │   │       ├── wazuh1.indexer.yml
-    │   │       ├── wazuh2.indexer.yml
-    │   │       └── wazuh3.indexer.yml
-    │   ├── docker-compose.yml
-    │   ├── generate-indexer-certs.yml
-    │   ├── Migration-to-Wazuh-4.4.md
-    │   ├── README.md
-    │   └── volume-migrator.sh
-    ├── README.md
-    ├── SECURITY.md
-    ├── single-node
-    │   ├── config
-    │   │   ├── certs.yml
-    │   │   ├── wazuh_cluster
-    │   │   │   └── wazuh_manager.conf
-    │   │   ├── wazuh_dashboard
-    │   │   │   ├── opensearch_dashboards.yml
-    │   │   │   └── wazuh.yml
-    │   │   └── wazuh_indexer
-    │   │       ├── internal_users.yml
-    │   │       └── wazuh.indexer.yml
-    │   ├── docker-compose.yml
-    │   ├── generate-indexer-certs.yml
-    │   └── README.md
-    └── VERSION
+```bash
+docker-compose -f generate-indexer-certs.yml run --rm generator
+```
 
+This saves the certificates into the `config/wazuh_indexer_ssl_certs` directory.
 
+### Create a Custom Docker Network
 
-## Branches
+```bash
+sudo docker network create elastic-network
+```
+    Important note : Elastic stack will use this network, so you have to keep the same name (elastic-network) in order for the project to work. If you want to change the name, you will need to also change it in elk-wazuh-docker/docker-compose.yml.
+### Start the Wazuh Single-node Deployment
 
-* `master` branch contains the latest code, be aware of possible bugs on this branch.
-* `stable` branch on correspond to the last Wazuh stable version.
+```bash
+docker-compose up -d --network elastic-network
+```
 
-## Compatibility Matrix
+After deploying Wazuh, the **Wazuh Dashboard** will be accessible at [https://localhost/app/login](https://localhost/app/login) with the default credentials **Login**: `admin` and **Password**: `SecretPassword`
 
-| Wazuh version | ODFE    | XPACK  |
-|---------------|---------|--------|
-| v4.8.2        |         |        |
-| v4.8.1        |         |        |
-| v4.8.0        |         |        |
-| v4.7.5        |         |        |
-| v4.7.4        |         |        |
-| v4.7.3        |         |        |
-| v4.7.2        |         |        |
-| v4.7.1        |         |        |
-| v4.7.0        |         |        |
-| v4.6.0        |         |        |
-| v4.5.4        |         |        |
-| v4.5.3        |         |        |
-| v4.5.2        |         |        |
-| v4.5.1        |         |        |
-| v4.5.0        |         |        |
-| v4.4.5        |         |        |
-| v4.4.4        |         |        |
-| v4.4.3        |         |        |
-| v4.4.2        |         |        |
-| v4.4.1        |         |        |
-| v4.4.0        |         |        |
-| v4.3.11       |         |        |
-| v4.3.10       |         |        |
-| v4.3.9        |         |        |
-| v4.3.8        |         |        |
-| v4.3.7        |         |        |
-| v4.3.6        |         |        |
-| v4.3.5        |         |        |
-| v4.3.4        |         |        |
-| v4.3.3        |         |        |
-| v4.3.2        |         |        |
-| v4.3.1        |         |        |
-| v4.3.0        |         |        |
-| v4.2.7        | 1.13.2  | 7.11.2 |
-| v4.2.6        | 1.13.2  | 7.11.2 |
-| v4.2.5        | 1.13.2  | 7.11.2 |
-| v4.2.4        | 1.13.2  | 7.11.2 |
-| v4.2.3        | 1.13.2  | 7.11.2 |
-| v4.2.2        | 1.13.2  | 7.11.2 |
-| v4.2.1        | 1.13.2  | 7.11.2 |
-| v4.2.0        | 1.13.2  | 7.10.2 |
-| v4.1.5        | 1.13.2  | 7.10.2 |
-| v4.1.4        | 1.12.0  | 7.10.2 |
-| v4.1.3        | 1.12.0  | 7.10.2 |
-| v4.1.2        | 1.12.0  | 7.10.2 |
-| v4.1.1        | 1.12.0  | 7.10.2 |
-| v4.1.0        | 1.12.0  | 7.10.2 |
-| v4.0.4        | 1.11.0  |        |
-| v4.0.3        | 1.11.0  |        |
-| v4.0.2        | 1.11.0  |        |
-| v4.0.1        | 1.11.0  |        |
-| v4.0.0        | 1.10.1  |        |
+### Add Wazuh Agent
 
-## Credits and Thank you
+Use the ip of the current machine to deploy an agent. 
 
-These Docker containers are based on:
+## Install Elastic Stack with Docker Compose
 
-*  "deviantony" dockerfiles which can be found at [https://github.com/deviantony/docker-elk](https://github.com/deviantony/docker-elk)
-*  "xetus-oss" dockerfiles, which can be found at [https://github.com/xetus-oss/docker-ossec-server](https://github.com/xetus-oss/docker-ossec-server)
+### Navigate to the directory and start the ELK:
 
-We thank you them and everyone else who has contributed to this project.
+```bash
+cd Wazuh_ElasticSack_Ingtegration_on_Docker/elasticstack_for_Wazuh_on_Docker
+sudo docker-compose up -d --build
+```
+Note: Any data indexed before this configuration is complete would not be forwarded to the Elastic indexes. Make sure you have new data forwarded to Elastic before proceeding to the next step, otherwise the `wazuh_kibana_setup` will not execute properly.
 
-## License and copyright
+## Configure Wazuh Alerts Index Pattern in Elastic + Elastic Dashboards
 
-Wazuh Docker Copyright (C) 2017, Wazuh Inc. (License GPLv2)
+### Run the setup script:
 
-## Web references
+```bash
+sudo ./wazuh_kibana_setup.sh
+```
 
-[Wazuh website](http://wazuh.com)
+By following these steps, you will have successfully integrated Wazuh with the Elastic Stack on Docker, providing a robust monitoring and alerting solution.
