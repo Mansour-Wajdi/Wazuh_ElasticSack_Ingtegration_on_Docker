@@ -122,4 +122,4 @@ volumes:
 
 networks:
   elastic-network:
-    driver: bridge
+    external: true
