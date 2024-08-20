@@ -60,12 +60,6 @@ docker-compose -f generate-indexer-certs.yml run --rm generator
 
 This saves the certificates into the `config/wazuh_indexer_ssl_certs` directory.
 
-### Create a Custom Docker Network
-
-```bash
-sudo docker network create elastic-network
-```
-    Important note : Elastic stack will use this network, so you have to keep the same name (elastic-network) in order for the project to work. If you want to change the name, you will need to also change it in elk-wazuh-docker/docker-compose.yml.
 ### Start the Wazuh Single-node Deployment
 
 ```bash
