@@ -71,7 +71,7 @@ Important note : Elastic stack will use this network, so you have to keep the sa
 ### Start the Wazuh Single-node Deployment
 
 ```bash
-docker-compose up -d --network elastic-network
+docker-compose up -d 
 ```
 
 After deploying Wazuh, the **Wazuh Dashboard** will be accessible at [https://localhost/app/login](https://localhost/app/login) with the default credentials **Login**: `admin` and **Password**: `SecretPassword`
