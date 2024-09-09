@@ -97,5 +97,4 @@ volumes:
 
 networks:
   elastic-network:
-    external:
-      name: elastic-network
+    external: true
